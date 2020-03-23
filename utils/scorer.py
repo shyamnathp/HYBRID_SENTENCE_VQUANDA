@@ -12,21 +12,24 @@ class BleuScorer(object):
         """Calculate blue score for one example"""
         return nltk.translate.bleu_score.sentence_bleu([reference], hypothesis)
 
-    def data_score(self, data, predictor):
+    def data_score(self, data_ques, data_quer, predictor):
         """Score complete list of data"""
-        for example in data:
-            reference = [t.lower() for t in example.trg]
-            hypothesis = predictor.predict(example.src)
+        for _,batch in enumerate(zip(data_ques, data_quer)):
+            example_ques, example_quer = batch
+            reference = [t.lower() for t in example_ques.trg]
+            reference_query = [[t.lower() for t in example_quer.trg]]
+            hypothesis = predictor.predict(example_ques.src, example_quer.src)
             blue_score = self.example_score(reference, hypothesis)
             self.results.append({
                 'reference': reference,
                 'hypothesis': hypothesis,
-                'blue_score': blue_score
+                'blue_score': blue_score,
+                'reference_query': reference_query
             })
             self.score += blue_score
             self.instances += 1
 
-        return self.score / self.instances
+        return self.results, self.score / self.instances
 
     def average_score(self):
         """Return bleu average score"""

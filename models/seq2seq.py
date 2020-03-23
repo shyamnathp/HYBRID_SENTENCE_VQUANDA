@@ -2,19 +2,21 @@
 Main sequence to sequence class which conects
 encoder-decoder model
 """
+import torch
 import torch.nn as nn
 
 class Seq2Seq(nn.Module):
     """
     Seq2seq class
     """
-    def __init__(self, encoder, decoder, name):
+    def __init__(self, encoder, encoder_query, decoder, name):
         super().__init__()
+        self.encoder_query = encoder_query
         self.encoder = encoder
         self.decoder = decoder
         self.name = name
 
-    def forward(self, src_tokens, src_lengths, trg_tokens, teacher_forcing_ratio=0.5):
+    def forward(self, src_tokens, src_lengths, src_query_tokens, src_query_lengths, trg_tokens, teacher_forcing_ratio=0.5):
         """
         Run the forward pass for an encoder-decoder model.
 
@@ -32,7 +34,9 @@ class Seq2Seq(nn.Module):
                 - attention scores of shape `(batch, trg_len, src_len)`
         """
         encoder_out = self.encoder(src_tokens, src_lengths=src_lengths)
+        encoder_out_query = self.encoder_query(src_query_tokens, src_lengths=src_query_lengths)
+        encoder_out = torch.cat((encoder_out, encoder_out_query), dim=1)
         decoder_out = self.decoder(trg_tokens, encoder_out,
-                                   src_tokens=src_tokens,
+                                   src_tokens=src_tokens, src_query_tokens=src_query_tokens,
                                    teacher_forcing_ratio=teacher_forcing_ratio)
         return decoder_out

@@ -14,8 +14,8 @@ GPU = 'gpu'
 CPU = 'cpu'
 CUDA = 'cuda'
 
-TRAIN_PATH = '/dataset/train.json'
-TEST_PATH = '/dataset/test.json'
+TRAIN_PATH = '/VQUANDA/dataset/train.json'
+TEST_PATH = '/VQUANDA/dataset/test.json'
 CHECKPOINT_PATH = '/model/'
 
 ANSWER_TOKEN = '<ans>'

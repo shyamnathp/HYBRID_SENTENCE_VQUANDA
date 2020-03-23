@@ -94,8 +94,14 @@ class Decoder(nn.Module):
 
         self.linear_out = nn.Linear(embed_dim, output_dim)
 
-    def make_masks(self, src_tokens, trg_tokens):
+    def make_masks(self, src_tokens, src_query_tokens, trg_tokens):
         src_mask = (src_tokens != self.pad_id).unsqueeze(1).unsqueeze(2)
+        src_query_mask =  (src_query_tokens != self.pad_id).unsqueeze(1).unsqueeze(2)
+        #src_query_mask = torch.zeros(src_query_mask.size(), device=self.device, dtype=torch.uint8)
+        #changed
+        #src_mask = torch.zeros(src_mask.size(), device=self.device, dtype=torch.uint8)
+        src_mask = torch.cat((src_mask, src_query_mask), dim=3)
+        #src_mask = src_query_mask
         trg_pad_mask = (trg_tokens != self.pad_id).unsqueeze(1).unsqueeze(3).byte()
         trg_len = trg_tokens.shape[1]
         trg_sub_mask = torch.tril(torch.ones((trg_len, trg_len), device=self.device)).byte()
@@ -115,7 +121,9 @@ class Decoder(nn.Module):
             x (LongTensor): (batch, trg_len, output_dim)
         """
         src_tokens = kwargs.get('src_tokens', '')
-        src_mask, trg_mask = self.make_masks(src_tokens, trg_tokens)
+        src_query_tokens = kwargs.get('src_query_tokens', '')
+
+        src_mask, trg_mask = self.make_masks(src_tokens, src_query_tokens, trg_tokens)
 
         x = self.embed_tokens(trg_tokens) * self.scale
         x += self.embed_positions(trg_tokens)

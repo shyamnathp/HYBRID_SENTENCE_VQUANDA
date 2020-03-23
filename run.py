@@ -24,12 +24,15 @@ from utils.constants import (
 
 DEVICE = torch.device(CUDA if torch.cuda.is_available() else CPU)
 
+ques = 0
+query = 1
+
 def parse_args():
     """Add arguments to parser"""
     parser = argparse.ArgumentParser(description='Verbalization dataset baseline models.')
-    parser.add_argument('--model', default=RNN_NAME, type=str,
+    parser.add_argument('--model', default=TRANSFORMER_NAME, type=str,
                         choices=[RNN_NAME, CNN_NAME, TRANSFORMER_NAME], help='model to train the dataset')
-    parser.add_argument('--input', default=QUESTION, type=str,
+    parser.add_argument('--input', default=QUERY, type=str,
                         choices=[QUESTION, QUERY], help='use query as input')
     parser.add_argument('--attention', default=ATTENTION_1, type=str,
                         choices=[ATTENTION_1, ATTENTION_2], help='attention layer for rnn model')
@@ -43,11 +46,21 @@ def parse_args():
 def main():
     """Main method to run the models"""
     args = parse_args()
-    dataset = VerbalDataset()
-    query_as_input = True if args.input == QUERY else False
-    dataset.load_data_and_fields(cover_entities=args.cover_entities, query_as_input=query_as_input)
-    src_vocab, trg_vocab = dataset.get_vocabs()
-    train_data, valid_data, test_data = dataset.get_data()
+    dataset = []
+    vocab = []
+    whole_data = []
+    for x in [ques,query]:
+        dataset.append(VerbalDataset())
+        #changed - cover_entities
+        dataset[x].load_data_and_fields(query_as_input=x)
+        vocab.append(dataset[x].get_vocabs())
+        whole_data.append(dataset[x].get_data())
+
+    src_vocab, trg_vocab = vocab[0]
+    src_vocab_query, trg_vocab_query = vocab[1]
+    train_data_question, valid_data_question, test_data_question = whole_data[0]
+    print("train_data_quer", len(list(train_data_question)))
+    train_data_query, valid_data_query, test_data_query = whole_data[1]
 
     print('--------------------------------')
     print(f'Model: {args.model}')
@@ -56,15 +69,15 @@ def main():
         print(f'Attention: {args.attention}')
     print(f'Cover entities: {args.cover_entities}')
     print('--------------------------------')
-    print(f"Training data: {len(train_data.examples)}")
-    print(f"Evaluation data: {len(valid_data.examples)}")
-    print(f"Testing data: {len(test_data.examples)}")
+    print(f"Training data: {len(train_data_query.examples)}")
+    print(f"Evaluation data: {len(valid_data_query.examples)}")
+    print(f"Testing data: {len(test_data_query.examples)}")
     print('--------------------------------')
-    print(f'Question example: {train_data.examples[0].src}')
-    print(f'Answer example: {train_data.examples[0].trg}')
+    print(f'Question example: {train_data_query.examples[0].src}')
+    print(f'Answer example: {train_data_query.examples[0].trg}')
     print('--------------------------------')
-    print(f"Unique tokens in questions vocabulary: {len(src_vocab)}")
-    print(f"Unique tokens in answers vocabulary: {len(trg_vocab)}")
+    print(f"Unique tokens in questions vocabulary: {len(src_vocab_query)}")
+    print(f"Unique tokens in answers vocabulary: {len(trg_vocab_query)}")
     print('--------------------------------')
     print(f'Batch: {args.batch_size}')
     print(f'Epochs: {args.epochs_num}')
@@ -81,8 +94,9 @@ def main():
 
     # create model
     encoder = Encoder(src_vocab, DEVICE)
-    decoder = Decoder(trg_vocab, DEVICE)
-    model = Seq2Seq(encoder, decoder, args.model).to(DEVICE)
+    encoder_query = Encoder(src_vocab_query, DEVICE)
+    decoder = Decoder(trg_vocab_query, DEVICE)
+    model = Seq2Seq(encoder, encoder_query, decoder, args.model).to(DEVICE)
 
     parameters_num = sum(p.numel() for p in model.parameters() if p.requires_grad)
     print(f'The model has {parameters_num:,} trainable parameters')
@@ -103,29 +117,45 @@ def main():
 
     # train data
     trainer = Trainer(optimizer, criterion, args.batch_size, DEVICE)
-    trainer.train(model, train_data, valid_data, num_of_epochs=args.epochs_num)
+    trainer.train(model, train_data_question, train_data_query, valid_data_question, valid_data_query, num_of_epochs=args.epochs_num)
 
     # load model
     model = Chechpoint.load(model)
 
     # generate test iterator
     valid_iterator, test_iterator = BucketIterator.splits(
-                                        (valid_data, test_data),
+                                        (valid_data_question, test_data_question),
+                                        repeat=False,
                                         batch_size=args.batch_size,
                                         sort_within_batch=True if args.model == RNN_NAME else False,
                                         sort_key=lambda x: len(x.src),
                                         device=DEVICE)
 
+    valid_iterator_query, test_iterator_query = BucketIterator.splits(
+                                        (valid_data_query, test_data_query),
+                                        repeat=False,
+                                        batch_size=args.batch_size,
+                                        sort_within_batch=True if args.model == RNN_NAME else False,
+                                        sort_key=lambda x: len(x.src),
+                                        device=DEVICE)
+    
+    
+
     # evaluate model
-    valid_loss = trainer.evaluator.evaluate(model, valid_iterator)
-    test_loss = trainer.evaluator.evaluate(model, test_iterator)
+    valid_loss = trainer.evaluator.evaluate(model, valid_iterator, valid_iterator_query)
+    test_loss = trainer.evaluator.evaluate(model, test_iterator, test_iterator_query)
+
 
     # calculate blue score for valid and test data
-    predictor = Predictor(model, src_vocab, trg_vocab, DEVICE)
+    predictor = Predictor(model, src_vocab, src_vocab_query, trg_vocab, DEVICE)
     valid_scorer = BleuScorer()
     test_scorer = BleuScorer()
-    valid_scorer.data_score(valid_data.examples, predictor)
-    test_scorer.data_score(test_data.examples, predictor)
+    valid_scorer.data_score(valid_data_question.examples, valid_data_query.examples, predictor)
+    results , _ = test_scorer.data_score(test_data_question.examples, test_data_query.examples, predictor)
+
+    for k in results[0:10]:
+        print("reference ", k['reference'])
+        print("hypothesis", k['hypothesis'])
 
     print(f'| Val. Loss: {valid_loss:.3f} | Test PPL: {math.exp(valid_loss):7.3f} |')
     print(f'| Val. Data Average BLEU score {valid_scorer.average_score()} |')
