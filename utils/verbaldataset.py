@@ -36,6 +36,11 @@ class VerbalDataset(object):
         self.src_field = None
         self.trg_field = None
         self.earl_entities = self._read_earl_entites(str(self.ROOT_PATH) + '/earl_entities.json')
+        with open('/data/premnadh/Hybrid-QASystem/LCQuad/train-data.json') as json_fileTwo:
+            self.dataLCQTrain = json.load(json_fileTwo)
+        with open('/data/premnadh/Hybrid-QASystem/LCQuad/test-data.json') as json_fileThree:
+            self.dataLCQTest = json.load(json_fileThree)
+        self.templateJson = json.load(open('/data/premnadh/Hybrid-QASystem/Utils/templates.json'))      
 
     def _read_earl_entites(self, path):
         entities = []
@@ -74,39 +79,74 @@ class VerbalDataset(object):
 
         return question, answer
 
-    def _prepare_query(self, query, cover_entities):
+    def _prepare_query(self, query, uid, cover_entities):
         """
         trasnform query from this:
         SELECT DISTINCT COUNT(?uri) WHERE { ?x <http://dbpedia.org/ontology/commander> <http://dbpedia.org/resource/Andrew_Jackson> . ?uri <http://dbpedia.org/ontology/knownFor> ?x  . }
         To this:
         select distinct count_uri where brack_open var_x commander Andrew Jackson sep_dot var_uri known for var_x sep_dot brack_close
         """
+        lcTrain = [val for val in self.dataLCQTrain if val['_id'] == uid]
+        lcTest = [val for val in self.dataLCQTest if val['_id'] == uid]
+        tempId = None
+        if(lcTrain):
+            tempId = (lcTrain[0])['sparql_template_id']
+        elif(lcTest):
+            tempId = (lcTest[0])['sparql_template_id']
+
+        tempEntry = [val for val in self.templateJson if val['id'] == tempId]
+        #if(len(tempEntry) != 0):
+        logical_form = (tempEntry[0])['logical_form']
+
+        logical_form = logical_form.replace('(', ' ( ')\
+                                   .replace(')', ' ) ')\
+                                   .replace(',', ' ,').strip()
+
         query = query.replace('\n', ' ')\
                      .replace('\t', '')\
                      .replace('?', '')\
                      .replace('{?', '{ ?')\
                      .replace('>}', '> }')\
+                     .replace('{uri', '{ uri')\
                      .replace('uri}', 'uri }').strip()
         query = query.split()
         new_query = []
+        i = j = 1
+        classType = 0
         for q in query:
             if q in self.QUERY_DICT:
                 q = self.QUERY_DICT[q]
             if 'http' in q:
                 if 'dbpedia.org/ontology' in q or 'dbpedia.org/property' in q:
+                    original_q = q
+                    original_q = original_q.replace('<','').replace('>','')
                     q = q.rsplit('/', 1)[-1].lstrip('<').rstrip('>')
                     q = filter(None, re.split("([A-Z][^A-Z]*)", q))
                     q = ' '.join(q)
+
+                    with open('/data/premnadh/Hybrid-QASystem/Utils/predicates.txt', 'r') as file1:
+                        contents = file1.readlines()
+                        nContents = [con.replace(',\n', '') for con in contents]
+                        if original_q in nContents:
+                            predicate = 'pred'+str(j)
+                            logical_form = logical_form.replace(predicate, q.lower())
+                            j += 1
+
+                    if(classType == 1):
+                        logical_form = logical_form.replace('class', q.lower())
+                        classType = 0
                 elif 'www.w3.org/1999/02/22-rdf-syntax-ns#type' in q:
                     q = 'type'
+                    classType = 1
                 elif cover_entities:
-                    q = ENTITY_TOKEN
+                    q = ENTITY_TOKEN + str(i)
+                    i += 1
                 else:
                     q = q.rsplit('/', 1)[-1].lstrip('<').rstrip('>').replace('_', ' ')
             new_query.append(q.lower())
 
         assert new_query[-1] == 'brack_close', 'Query not ending with a bracket.'
-        return ' '.join(new_query)
+        return ' '.join(new_query), logical_form
 
     def _extract_question_answer(self, train, test):
         return [[data['question'], data['verbalized_answer']] for data in train], \
@@ -145,9 +185,14 @@ class VerbalDataset(object):
                     question = example['question']
                     answer = example['verbalized_answer']
                     query = example['query']
-                    if query_as_input: query = self._prepare_query(query, cover_entities)
-                    if cover_entities: question, answer = self._cover_entities(uid, question, answer)
-                    example.update(question=question, verbalized_answer=answer, query=query)
+                    if cover_entities: 
+                        question, answer = self._cover_entities(uid, question, answer)
+                    if query_as_input: 
+                        query, logical_form = self._prepare_query(query, uid, cover_entities)
+                        example.update(question=question, verbalized_answer=answer, query=logical_form)
+                    else:
+                        example.update(question=question, verbalized_answer=answer, query=query)
+                    
 
 
         # extract question-answer or query-answer pairs

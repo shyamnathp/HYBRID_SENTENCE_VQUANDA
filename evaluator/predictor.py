@@ -26,7 +26,7 @@ class Predictor(object):
         with torch.no_grad():
             encoder_out = self.model.encoder(src_tensor)
             #encoder_out = torch.zeros([src_tensor.size()[0],src_tensor.size()[1],512]).to(device='cuda')
-            encoder_out_query = self.model.encoder_query(src_query_tensor)
+            encoder_out_query = self.model.encoder(src_query_tensor)
             #encoder_out_query = torch.zeros([src_query_tensor.size()[0],src_query_tensor.size()[1],512]).to(device='cuda')
             encoder_out = torch.cat((encoder_out, encoder_out_query), dim=1)
 

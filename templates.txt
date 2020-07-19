@@ -1,0 +1,222 @@
+{
+	"template": " SELECT DISTINCT ?uri WHERE {?uri <%(e_to_e_out)s> <%(e_out)s> } ",
+    "logical form": find(varuri, pred1, ent1),
+	"id": 1,
+	"n_entities": 1,
+	"type": "vanilla"
+}, {
+	"template": " SELECT DISTINCT ?uri WHERE {?uri <%(e_to_e_out)s> <%(e_out)s> . ?uri rdf:type class } ",
+    "logical_form": find(varuri type(class), pred1, ent1),
+	"id": 301,
+	"n_entities": 1,
+	"type": "vanilla"
+}, {
+	"template": " SELECT DISTINCT ?uri WHERE { <%(e_in)s> <%(e_in_to_e)s> ?uri } ",
+    "logical_form": find(ent1, pred1, varuri),
+	"id": 2,
+	"n_entities": 1,
+	"type": "vanilla"
+}, {
+	"template": " SELECT DISTINCT ?uri WHERE { <%(e_in)s> <%(e_in_to_e)s> ?uri } . ?uri rdf:type class ",
+    "logical_form": find(ent1, pred1, varuri type(class)),
+	"id": 302,
+	"n_entities": 1,
+	"type": "vanilla"
+},{
+    #Wrong
+	"template": " SELECT DISTINCT ?uri WHERE { <%(e_in_in)s> <%(e_in_in_to_e_in)s> ?x . ?x <%(e_in_to_e)s> ?uri . ?x rdf:type class} ",
+	"logical_form": find(varx find(ent1, pred1, varx), pred2, varuri),
+    "id": 3,
+	"n_entities": 1,
+	"type": "vanilla"
+},{
+    #Wrong
+	"template": " SELECT DISTINCT ?uri WHERE { <%(e_in_in)s> <%(e_in_in_to_e_in)s> ?x . ?x <%(e_in_to_e)s> ?uri } ",
+	"logical_form": find(varx find(ent1, pred1, varx) type(class), pred2, varuri),
+    "id": 3,
+    "id": 303,
+	"n_entities": 1,
+	"type": "vanilla"
+}, {
+	"template": " SELECT DISTINCT ?uri WHERE { ?x <%(e_in_to_e_in_out)s> <%(e_in_out)s> . ?x <%(e_in_to_e)s> ?uri } ",
+	"logical_form": find(varx find(varx, pred1, ent1), pred2, varuri),
+    "id": 5,
+	"n_entities": 1,
+	"type": "vanilla"
+}, {
+	"template": " SELECT DISTINCT ?uri WHERE { ?x <%(e_in_to_e_in_out)s> <%(e_in_out)s> . ?x <%(e_in_to_e)s> ?uri . ?uri rdf:type class} ",
+	"logical_form": find(varx find(varx, pred1, ent1) type(class), pred2, varuri),
+	"id": 305,
+	"n_entities": 1,
+	"type": "vanilla"
+},{
+	"template": "SELECT DISTINCT ?uri WHERE { ?x <%(e_out_to_e_out_out)s> <%(e_out_out)s> . ?uri <%(e_to_e_out)s> ?x } ",
+	"logical_form": find(varx, pred2, ?x find(?x, pred1, ent1)),
+    "id": 6,
+	"n_entities": 1,
+	"type": "vanilla"
+}, {
+	"template": "SELECT DISTINCT ?uri WHERE { ?x <%(e_out_to_e_out_out)s> <%(e_out_out)s> . ?uri <%(e_to_e_out)s> ?x } . ?uri rdf:type class",
+	"logical_form": find(varx type(class), pred2, ?x find(?x, pred1, ent1)),
+	"logical_form": find(?uri, <%(e_to_e_out)s>, ?x find(?x, <%(e_out_to_e_out_out)s>, <%(e_out_out)s>)),
+    "id": 306,
+	"n_entities": 1,
+	"type": "vanilla"
+},{
+	"template": " SELECT DISTINCT ?uri WHERE { ?uri <%(e_to_e_out)s> <%(e_out_1)s> . ?uri <%(e_to_e_out)s> <%(e_out_2)s>} ",
+	"logical_form": find(varuri , pred1, union(ent1, ent2)),
+    "id": 7,
+	"n_entities": 2,
+	"type": "vanilla"
+}, {
+	"template": " SELECT DISTINCT ?uri WHERE { ?uri <%(e_to_e_out)s> <%(e_out_1)s> . ?uri <%(e_to_e_out)s> <%(e_out_2)s>} ",
+	"logical_form": find(varuri type(class), pred1, union(ent1, ent2)),
+	"logical_form": find(?uri type(class), <%(e_to_e_out)s>, union(<%(e_out_1)s>, <%(e_out_2)s>)),
+    "id": 307,
+	"n_entities": 2,
+	"type": "vanilla"
+},{
+	"template": " SELECT DISTINCT ?uri WHERE {?uri <%(e_to_e_out_1)s> <%(e_out_1)s> . ?uri <%(e_to_e_out_2)s> <%(e_out_2)s> } ",
+	"logical_form": find(varuri find(varuri, pred2, ent2), pred1, ent1),
+    "id": 8,
+	"n_entities": 2,
+	"type": "vanilla"
+}, {
+	"template": " SELECT DISTINCT ?uri WHERE {?uri <%(e_to_e_out_1)s> <%(e_out_1)s> . ?uri <%(e_to_e_out_2)s> <%(e_out_2)s> . ?uri rdf:type class} ",
+	"logical_form": find(varuri find(varuri, pred2, ent2) type(class), pred1, ent1),
+	"logical_form": find(?uri find(?uri, <%(e_to_e_out_2)s>, <%(e_out_2)s>) type(class), <%(e_to_e_out_1)s>, <%(e_out_1)s>)
+    "id": 308,
+	"n_entities": 2,
+	"type": "vanilla"
+},{
+    #Wrong - 1 example
+	"template": " SELECT DISTINCT ?uri WHERE { <%(e_in_in)s>  <%(e_in_in_to_e_in)s> ?x .  ?x <%(e_in_to_e)s> ?uri}",
+	"logical_form": find(varx union(ent1, ?x), pred1, ?uri),
+    "id": 9,
+	"n_entities": 1,
+	"type": "vanilla"
+}, {
+    #Wrong - no examples
+	"template": " SELECT DISTINCT ?uri WHERE { <%(e_in_in)s>  <%(e_in_in_to_e_in)s> ?x .  ?x <%(e_in_to_e)s> . ?uri. ?x rdf:type class}",
+	"logical_form": "find(union(ent1, varx), pred1, varuri type(class))",
+	"logical_form": find(?x union(<%(e_in_in)s>, ?x), <%(e_in_to_e)s>, ?uri type(class)),
+    "id": 309,
+	"n_entities": 1,
+	"type": "vanilla"
+},{
+	"template": " SELECT DISTINCT ?uri WHERE { <%(e_in_1)s> <%(e_in_to_e)s> ?uri. <%(e_in_2)s> <%(e_in_to_e)s> ?uri} ",
+	"logical_form": find(union(ent1, ent2), pred1, varuri),
+    "id": 15,
+	"n_entities": 2,
+	"type": "vanilla"
+},{
+	"template": " SELECT DISTINCT ?uri WHERE { <%(e_in_1)s> <%(e_in_to_e)s> ?uri. <%(e_in_2)s> <%(e_in_to_e)s> ?uri} . ?uri rdf:type class",
+	"logical_form": find(union(<%(e_in_1)s>, <%(e_in_2)s>), <%(e_in_to_e)s>, ?uri type(class)),
+    "id": 315,
+	"n_entities": 2,
+	"type": "vanilla"
+},{
+	"template": " SELECT DISTINCT ?uri WHERE { <%(e_in_1)s> <%(e_in_to_e_1)s> ?uri. <%(e_in_2)s> <%(e_in_to_e_2)s> ?uri} ",
+	"logical_form": find(ent1, pred1, find(ent2, pred2, varuri)),
+    "id": 16,
+	"n_entities": 2,
+	"type": "vanilla"
+}, {
+	"template": " SELECT DISTINCT ?uri WHERE { <%(e_in_1)s> <%(e_in_to_e_1)s> ?uri. <%(e_in_2)s> <%(e_in_to_e_2)s> ?uri} . ?uri rdf:type class",
+	"logical_form": find(<%(e_in_1)s>, <%(e_in_to_e_1)s>, ?uri find(<%(e_in_2)s>, <%(e_in_to_e_2)s>, ?uri) type(class)),
+    "id": 316,
+	"n_entities": 2,
+	"type": "vanilla"
+},{
+	"template": " SELECT DISTINCT COUNT(?uri) WHERE {?uri <%(e_to_e_out)s> <%(e_out)s> } ",
+    "logical_form": count(varuri, pred1, ent1),
+	"id": 101,
+	"n_entities": 1,
+	"type": "count"
+}, {
+	"template": " SELECT DISTINCT COUNT(?uri) WHERE {?uri <%(e_to_e_out)s> <%(e_out)s> . ?uri rdf:type class} ",
+	"logical_form": count(?uri type(class), <%(e_to_e_out)s>, <%(e_out)s>),
+    "id": 401,
+	"n_entities": 1,
+	"type": "count"
+},{
+	"template": " SELECT DISTINCT COUNT(?uri) WHERE { <%(e_in)s> <%(e_in_to_e)s> ?uri } ",
+    "logical_form": count(ent1, pred1, varuri),
+	"id": 102,
+	"n_entities": 1,
+	"type": "count"
+}, {
+	"template": " SELECT DISTINCT COUNT(?uri) WHERE { <%(e_in)s> <%(e_in_to_e)s> ?uri } . ?uri rdf:type class",
+	"logical_form": count(<%(e_in)s>, <%(e_in_to_e)s>, ?uri type(class))
+    "id": 402,
+	"n_entities": 1,
+	"type": "count"
+},{
+	"template": " SELECT DISTINCT COUNT(?uri) WHERE { <%(e_in_in)s> <%(e_in_in_to_e_in)s> ?x . ?x <%(e_in_to_e)s> ?uri } ",
+	"logical_form": count(find(ent1, pred1, varx), pred2, varuri),
+    "id": 103,
+	"n_entities": 1,
+	"type": "count"
+}, {
+	"template": " SELECT DISTINCT COUNT(?uri) WHERE { <%(e_in_in)s> <%(e_in_in_to_e_in)s> ?x . ?x <%(e_in_to_e)s> ?uri } ",
+	"logical_form": count( ?x find(<%(e_in_in)s>, <%(e_in_in_to_e_in)s>, ?x) type(class), <%(e_in_to_e)s>, ?uri),	
+    "id": 403,
+	"n_entities": 1,
+	"type": "count"
+},{
+    #Wrong
+	"template": " SELECT DISTINCT COUNT(?uri) WHERE { ?x <%(e_in_to_e_in_out)s> <%(e_in_out)s> . ?x <%(e_in_to_e)s> ?uri. ?x rdf:type class}",
+	"logical_form": count(find(varx, pred1, ent1), pred2, varuri),
+    "id": 105,
+	"n_entities": 1,
+	"type": "count"
+}, {
+	"template": " SELECT DISTINCT COUNT(?uri) WHERE { ?x <%(e_in_to_e_in_out)s> <%(e_in_out)s> . ?x <%(e_in_to_e)s> ?uri } . ?uri rdf:type class",
+	"logical_form": count( ?x find(?x, <%(e_in_to_e_in_out)s>, <%(e_in_out)s>), <%(e_in_to_e)s>, ?uri type(class))
+    "id": 405,
+	"n_entities": 1,
+	"type": "count"
+},{
+	"template": "SELECT DISTINCT COUNT(?uri) WHERE { ?x <%(e_out_to_e_out_out)s> <%(e_out_out)s> . ?uri <%(e_to_e_out)s> ?x } ",
+	"logical_form": count(varuri, pred2, find(varx, pred1, ent1)),
+    "id": 106,
+	"n_entities": 1,
+	"type": "count"
+}, {
+	"template": "SELECT DISTINCT COUNT(?uri) WHERE { ?x <%(e_out_to_e_out_out)s> <%(e_out_out)s> . ?uri <%(e_to_e_out)s> ?x . ?uri rdf:type class} ",
+	"logical_form": count(?uri type(class), <%(e_to_e_out)s>, ?x find(?x, <%(e_out_to_e_out_out)s>, <%(e_out_out)s>)),
+    "id": 406,
+	"n_entities": 1,
+	"type": "count"
+},{
+	"template": " SELECT DISTINCT COUNT(?uri) WHERE { ?uri <%(e_to_e_out)s> <%(e_out_1)s> . ?uri <%(e_to_e_out)s> <%(e_out_2)s>} ",
+	"logical_form": count(varuri, pred1, union(ent1,ent2)),
+    "id": 107,
+	"n_entities": 2,
+	"type": "count"
+},{
+	"template": " SELECT DISTINCT COUNT(?uri) WHERE {?uri <%(e_to_e_out_1)s> <%(e_out_1)s> . ?uri <%(e_to_e_out_2)s> <%(e_out_2)s> } ",
+	"logical_form": count(find(varuri, pred2, ent2), pred1, ent1),
+    "id": 108,
+	"n_entities": 2,
+	"type": "count"
+}, {
+    #Wrong
+	"template": " SELECT DISTINCT COUNT(?uri) WHERE { ?x <%(e_in_to_e_in_out)s> <%(e_in_out)s> . ?x <%(e_in_to_e)s> ?uri }",
+	"logical_form": count(varx ,pred1, union(ent1,?uri)),
+    "id": 111,
+	"n_entities": 1,
+	"type": "count"
+},{
+	"template": "ASK WHERE { <%(uri)s> <%(e_to_e_out)s> <%(e_out)s> }",
+    "logical_form": is(enturi, pred1, ent1),
+	"id": 151,
+	"n_entities": 1,
+	"type": "ask"
+},{
+	"template": "ASK WHERE { <%(e_in)s> <%(e_in_to_e)s> <%(uri)s> }",
+    "logical_form": is(<%(e_in)s>, <%(e_in_to_e)s>, <%(uri)s>),
+	"id": 152,
+	"n_entities": 1,
+	"type": "ask"
+}

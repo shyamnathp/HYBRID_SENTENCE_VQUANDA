@@ -12,8 +12,8 @@ from utils.constants import PAD_TOKEN
 
 class Encoder(nn.Module):
     """Encoder"""
-    def __init__(self, vocabulary, device, embed_dim=512, layers=2,
-                 heads=8, pf_dim=2048, dropout=0.1, max_positions=100):
+    def __init__(self, vocabulary, device, embed_dim=768, layers=2,
+                 heads=12, pf_dim=2048, dropout=0.1, max_positions=100):
         super().__init__()
         input_dim = len(vocabulary)
         self.padding_idx = vocabulary.stoi[PAD_TOKEN]
@@ -75,8 +75,8 @@ class EncoderLayer(nn.Module):
 
 class Decoder(nn.Module):
     """Decoder"""
-    def __init__(self, vocabulary, device, embed_dim=512, layers=2,
-                 heads=8, pf_dim=2048, dropout=0.1, max_positions=100):
+    def __init__(self, vocabulary, device, embed_dim=768, layers=2,
+                 heads=12, pf_dim=2048, dropout=0.1, max_positions=100):
         super().__init__()
 
         output_dim = len(vocabulary)
@@ -258,7 +258,7 @@ class PositionalEmbedding(nn.Module):
 
 class NoamOpt:
     "Optim wrapper that implements rate."
-    def __init__(self, optimizer, model_size=512, factor=1, warmup=2000):
+    def __init__(self, optimizer, model_size=768, factor=1, warmup=2000):
         self.optimizer = optimizer
         self._step = 0
         self.warmup = warmup

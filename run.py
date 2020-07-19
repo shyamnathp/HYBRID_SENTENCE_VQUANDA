@@ -37,11 +37,16 @@ def parse_args():
     parser.add_argument('--attention', default=ATTENTION_1, type=str,
                         choices=[ATTENTION_1, ATTENTION_2], help='attention layer for rnn model')
     parser.add_argument('--cover_entities', action='store_true', help='cover entities')
-    parser.add_argument('--batch_size', default=100, type=int, help='batch size')
+    parser.add_argument('--batch_size', default=30, type=int, help='batch size')
     parser.add_argument('--epochs_num', default=50, type=int, help='number of epochs')
     args = parser.parse_args()
     return args
 
+def save_vocab(vocab):
+    path = '/data/premnadh/VQUANDA-Baseline-Models-1/trg_vocab.txt'
+    with open(path, 'w+') as f:     
+        for token, index in vocab.stoi.items():
+            f.write(f'{token}\n')
 
 def main():
     """Main method to run the models"""
@@ -52,7 +57,7 @@ def main():
     for x in [ques,query]:
         dataset.append(VerbalDataset())
         #changed - cover_entities
-        dataset[x].load_data_and_fields(query_as_input=x)
+        dataset[x].load_data_and_fields(cover_entities=True, query_as_input=x)
         vocab.append(dataset[x].get_vocabs())
         whole_data.append(dataset[x].get_data())
 
@@ -61,6 +66,8 @@ def main():
     train_data_question, valid_data_question, test_data_question = whole_data[0]
     print("train_data_quer", len(list(train_data_question)))
     train_data_query, valid_data_query, test_data_query = whole_data[1]
+
+    save_vocab(trg_vocab)
 
     print('--------------------------------')
     print(f'Model: {args.model}')
@@ -140,7 +147,6 @@ def main():
                                         device=DEVICE)
     
     
-
     # evaluate model
     valid_loss = trainer.evaluator.evaluate(model, valid_iterator, valid_iterator_query)
     test_loss = trainer.evaluator.evaluate(model, test_iterator, test_iterator_query)
@@ -151,7 +157,7 @@ def main():
     valid_scorer = BleuScorer()
     test_scorer = BleuScorer()
     valid_scorer.data_score(valid_data_question.examples, valid_data_query.examples, predictor)
-    results , _ = test_scorer.data_score(test_data_question.examples, test_data_query.examples, predictor)
+    results, _ = test_scorer.data_score(test_data_question.examples, test_data_query.examples, predictor)
 
     for k in results[0:10]:
         print("reference ", k['reference'])
@@ -159,8 +165,10 @@ def main():
 
     print(f'| Val. Loss: {valid_loss:.3f} | Test PPL: {math.exp(valid_loss):7.3f} |')
     print(f'| Val. Data Average BLEU score {valid_scorer.average_score()} |')
+    print(f'| Val. Data Average METEOR score {valid_scorer.average_meteor_score()} |')
     print(f'| Test Loss: {test_loss:.3f} | Test PPL: {math.exp(test_loss):7.3f} |')
     print(f'| Test Data Average BLEU score {test_scorer.average_score()} |')
+    print(f'| Test Data Average METEOR score {test_scorer.average_meteor_score()} |')
 
 
 if __name__ == "__main__":

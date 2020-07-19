@@ -26,3 +26,5 @@ PAD_TOKEN = '<pad>'
 
 SRC_NAME = 'src'
 TRG_NAME = 'trg'
+
+__DOWNLOAD_SERVER__ = 'https://public.ukp.informatik.tu-darmstadt.de/reimers/sentence-transformers/v0.2/'

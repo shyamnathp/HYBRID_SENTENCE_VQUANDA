@@ -37,6 +37,7 @@ class Trainer(object):
             torch.nn.utils.clip_grad_norm_(model.parameters(), clip)
             self.optimizer.step()
             epoch_loss += loss.item()
+        length = len(iterator)
         return epoch_loss / len(iterator)
 
     def _get_iterators(self, train_data, valid_data, model_name):
